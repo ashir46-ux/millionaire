@@ -3,376 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Raycaster 3D Shooter</title>
+    <title>Neon Solitaire</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #050508; font-family: 'Courier New', monospace; }
-        #canvas { display: block; margin: 0 auto; background-color: #000; box-shadow: 0 0 30px rgba(0, 255, 255, 0.2); }
-        .ui-overlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); text-align: center; color: #00ffff; pointer-events: none; text-shadow: 0 0 8px #00ffff; }
-        .instructions { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: #ff00ff; text-align: center; pointer-events: none; text-shadow: 0 0 5px #ff00ff; font-size: 14px; }
-        .start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; color: #00ffff; }
-        .start-btn { background: transparent; border: 2px solid #00ffff; color: #00ffff; padding: 15px 40px; font-size: 20px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 5px; box-shadow: 0 0 15px rgba(0,255,255,0.4); transition: all 0.2s; margin-top: 20px; }
-        .start-btn:hover { background: #00ffff; color: #000; box-shadow: 0 0 25px #00ffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body {
+            background: radial-gradient(circle, #1a1a2e 0%, #0f0f1a 100%);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        header {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .btn {
+            background: transparent;
+            border: 2px solid #ff00ff;
+            color: #ff00ff;
+            padding: 8px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            background: #ff00ff;
+            color: #fff;
+            box-shadow: 0 0 20px #ff00ff;
+        }
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 40px;
+            padding: 10px;
+        }
+        .top-bar, .bottom-bar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 15px;
+        }
+        .zone {
+            aspect-ratio: 2.5 / 3.5;
+            border: 2px dashed rgba(0, 255, 255, 0.2);
+            border-radius: 8px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .deck-zone, .waste-zone { grid-column: span 1; }
+        .foundation-zones { grid-column: 4 / 8; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        
+        /* Стили карт */
+        .card {
+            width: 100%;
+            aspect-ratio: 2.5 / 3.5;
+            background: #252538;
+            border: 2px solid #444466;
+            border-radius: 8px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .card.red {
+            color: #ff3366;
+            border-color: rgba(255, 51, 102, 0.4);
+            box-shadow: 0 0 5px rgba(255, 51, 102, 0.2);
+        }
+        .card.black {
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.2);
+        }
+        .card.back {
+            background: linear-gradient(135deg, #111122 0%, #222244 100%);
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 8px rgba(255, 0, 255, 0.3);
+            color: transparent !important;
+        }
+        .card.back * { display: none; }
+        .card:active { cursor: grabbing; }
+        .card.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+            z-index: 1000 !important;
+        }
+        .card-suit-bottom { align-self: flex-end; transform: rotate(180deg); }
+        
+        /* Смещение карт в стопках игрового поля */
+        .tableau-zone .card {
+            position: absolute;
+        }
+        
+        /* Победный холст для салюта карт */
+        #victory-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <div class="start-screen" id="start-screen">
-        <h1>NEON RAYCASTER 3D</h1>
-        <p style="color: #ff00ff; margin-top: 10px;">Процедурный псевдо-3D шутер в одном файле</p>
-        <button class="start-btn" onclick="initGame()">ВСТУПИТЬ В БОЙ</button>
+    <header>
+        <h1>NEON SOLITAIRE</h1>
+        <button class="btn" onclick="resetGame()">НОВАЯ ИГРА</button>
+    </header>
+
+    <div class="game-container">
+        <!-- Верхняя панель: Колода, Сброс и 4 Дома -->
+        <div class="top-bar">
+            <div class="zone id-deck" id="deck" onclick="drawCard()"></div>
+            <div class="zone id-waste" id="waste"></div>
+            <div></div> <!-- Пропуск для разделения -->
+            <div class="zone id-foundation" data-suit="♥" id="f-0"></div>
+            <div class="zone id-foundation" data-suit="♦" id="f-1"></div>
+            <div class="zone id-foundation" data-suit="♣" id="f-2"></div>
+            <div class="zone id-foundation" data-suit="♠" id="f-3"></div>
+        </div>
+
+        <!-- Нижняя панель: 7 стопок игрового поля -->
+        <div class="bottom-bar">
+            <div class="zone tableau-zone" id="t-0"></div>
+            <div class="zone tableau-zone" id="t-1"></div>
+            <div class="zone tableau-zone" id="t-2"></div>
+            <div class="zone tableau-zone" id="t-3"></div>
+            <div class="zone tableau-zone" id="t-4"></div>
+            <div class="zone tableau-zone" id="t-5"></div>
+            <div class="zone tableau-zone" id="t-6"></div>
+        </div>
     </div>
 
-    <div class="ui-overlay">
-        <h2 id="hud">ЗАРЯДЫ: 8/8  |  ОБЪЕКТЫ СТЕРТЫ: 0</h2>
-    </div>
-
-    <div class="instructions">
-        УПРАВЛЕНИЕ: WASD — Движение | Мышь — Обзор | Клик — Выстрел
-    </div>
-
-    <canvas id="canvas"></canvas>
+    <canvas id="victory-canvas"></canvas>
 
     <script>
-        // --- Аудио Движок (Синтез эффектов Doom) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const suits = ['♥', '♦', '♣', '♠'];
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        let deck = [];
+        let waste = [];
+        let foundations = [[], [], [], []];
+        let tableaus = [[], [], [], [], [], [], []];
         
-        function playLaserSound() {
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc.type = 'sawtooth';
-            // Скользящая частота вниз (классический лазерный выстрел)
-            osc.frequency.setValueAtTime(880, now);
-            osc.frequency.exponentialRampToValueAtTime(110, now + 0.15);
-            
-            // Фильтр для жесткости
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.setValueAtTime(400, now);
+        let draggedCards = [];
+        let sourceZoneId = null;
 
-            gain.gain.setValueAtTime(0.3, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.15);
-            
-            osc.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(now + 0.15);
-        }
-
-        function playExplosionSound() {
-            const now = audioCtx.currentTime;
-            // Создаем белый шум для взрыва
-            const bufferSize = audioCtx.sampleRate * 0.3;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
-            }
-            
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-            
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(300, now);
-            filter.frequency.exponentialRampToValueAtTime(10, now + 0.3);
-            
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.4, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.3);
-            
-            noise.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            noise.start();
-        }
-
-        // --- Игровой Движок ---
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-
-        // Разрешение рендеринга (фиксированное для ретро-атмосферы)
-        const WIDTH = 640;
-        const HEIGHT = 400;
-        canvas.width = WIDTH;
-        canvas.height = HEIGHT;
-
-        // Карта лабиринта (1 — неоновая стена, 0 — пусто)
-        const map = [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,0,0,1,0,1,1,1,1,0,1,0,1],
-            [1,0,1,0,0,0,0,0,0,0,0,1,0,1,0,1],
-            [1,0,1,0,1,1,1,1,1,0,0,1,0,1,0,1],
-            [1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1],
-            [1,0,1,0,1,0,0,0,1,0,1,1,1,1,0,1],
-            [1,0,1,0,1,1,0,1,1,0,0,0,0,0,0,1],
-            [1,0,1,0,0,0,0,0,0,0,1,1,0,1,0,1],
-            [1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1]
-        ];
-        const mapWidth = map[0].length;
-        const mapHeight = map.length;
-
-        // Игрок
-        const player = {
-            x: 2.5,
-            y: 2.5,
-            angle: 0,
-            fov: Math.PI / 3, // 60 градусов обзор
-            speed: 0.06,
-            rotSpeed: 0.003
-        };
-
-        // Враги / Мишени (Спрайты)
-        let sprites = [
-            {x: 4.5, y: 3.5, active: true},
-            {x: 12.5, y: 2.5, active: true},
-            {x: 12.5, y: 7.5, active: true},
-            {x: 7.5, y: 6.5, active: true}
-        ];
-
-        // Состояние ввода
-        const keys = {};
-        let score = 0;
-        let ammo = 8;
-        let isShooting = 0; // Фазы анимации выстрела
-
-        // Настройка захвата мыши
-        function initGame() {
-            audioCtx.resume();
-            document.getElementById('start-screen').style.display = 'none';
-            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
-            canvas.requestPointerLock();
-            window.requestAnimationFrame(gameLoop);
-        }
-
-        window.addEventListener('keydown', e => keys[e.code] = true);
-        window.addEventListener('keyup', e => keys[e.code] = false);
-        window.addEventListener('mousemove', e => {
-            if (document.pointerLockElement === canvas) {
-                player.angle += e.movementX * player.rotSpeed;
-            }
-        });
-        window.addEventListener('mousedown', () => {
-            if (document.pointerLockElement === canvas && isShooting === 0 && ammo > 0) {
-                isShooting = 5; // Длительность вспышки выстрела в кадрах
-                ammo--;
-                playLaserSound();
-                checkHit();
-                updateHUD();
-            } else if (ammo === 0 && isShooting === 0) {
-                // Автоперезарядка
-                ammo = 8;
-                updateHUD();
-            }
-        });
-
-        function updateHUD() {
-            document.getElementById('hud').innerText = `ЗАРЯДЫ: ${ammo}/8  |  ОБЪЕКТЫ СТЕРТЫ: ${score}`;
-        }
-
-        // Проверка попадания при выстреле (строго по центру экрана)
-        function checkHit() {
-            // Пускаем луч строго по центру взгляда игрока
-            let rayAngle = player.angle;
-            let distanceToWall = 0;
-            let hitWall = false;
-
-            let x = player.x;
-            let y = player.y;
-
-            let dx = Math.cos(rayAngle) * 0.1;
-            let dy = Math.sin(rayAngle) * 0.1;
-
-            // Ищем, задел ли луч активный спрайт до того, как ударился в стену
-            while (!hitWall && distanceToWall < 16) {
-                x += dx;
-                y += dy;
-                distanceToWall += 0.1;
-
-                if (map[Math.floor(y)][Math.floor(x)] === 1) {
-                    hitWall = true;
-                }
-
-                // Проверяем дистанцию до врагов
-                for (let sprite of sprites) {
-                    if (sprite.active) {
-                        let distToSprite = Math.sqrt((x - sprite.x)**2 + (y - sprite.y)**2);
-                        if (distToSprite < 0.2) {
-                            sprite.active = false;
-                            score++;
-                            playExplosionSound();
-                            return;
-                        }
-                    }
+        function createDeck() {
+            let newDeck = [];
+            for (let s of suits) {
+                for (let v of values) {
+                    newDeck.push({
+                        suit: s,
+                        value: v,
+                        isRed: s === '♥' || s === '♦',
+                        isFaceUp: false,
+                        weight: values.indexOf(v)
+                    });
                 }
             }
+            return newDeck;
         }
 
-        // Обновление физики перемещения
-        function updateLogic() {
-            let moveX = 0;
-            let moveY = 0;
-
-            if (keys['KeyW']) {
-                moveX += Math.cos(player.angle) * player.speed;
-                moveY += Math.sin(player.angle) * player.speed;
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
-            if (keys['KeyS']) {
-                moveX -= Math.cos(player.angle) * player.speed;
-                moveY -= Math.sin(player.angle) * player.speed;
-            }
-            if (keys['KeyA']) { // Стрейф влево
-                moveX += Math.sin(player.angle) * player.speed;
-                moveY -= Math.cos(player.angle) * player.speed;
-            }
-            if (keys['KeyD']) { // Стрейф вправо
-                moveX -= Math.sin(player.angle) * player.speed;
-                moveY += Math.cos(player.angle) * player.speed;
-            }
-
-            // Коллизии со стенами (с запасом, чтобы не залипать)
-            let newX = player.x + moveX;
-            let newY = player.y + moveY;
-
-            if (map[Math.floor(player.y)][Math.floor(newX + Math.sign(moveX)*0.2)] === 0) player.x = newX;
-            if (map[Math.floor(newY + Math.sign(moveY)*0.2)][Math.floor(player.x)] === 0) player.y = newY;
-
-            if (isShooting > 0) isShooting--;
         }
 
-        // --- РЕНДЕРИНГ (Алгоритм Рейкастинга) ---
-        function render() {
-            // 1. Рисуем небо и пол (простой градиент)
-            ctx.fillStyle = '#0a0512';
-            ctx.fillRect(0, 0, WIDTH, HEIGHT / 2);
-            ctx.fillStyle = '#050a12';
-            ctx.fillRect(0, HEIGHT / 2, WIDTH, HEIGHT / 2);
+        function resetGame() {
+            document.getElementById('victory-canvas').style.display = 'none';
+            deck = createDeck();
+            shuffle(deck);
+            waste = [];
+            foundations = [[], [], [], []];
+            tableaus = [[], [], [], [], [], [], []];
 
-            // Массив глубин для корректного рендеринга спрайтов поверх стен
-            let depthBuffer = [];
-
-            // 2. Сканируем экран по вертикальным полосам (Рейкастинг стенок)
-            for (let col = 0; col < WIDTH; col++) {
-                // Вычисляем угол конкретного луча внутри угла обзора (FOV)
-                let rayAngle = (player.angle - player.fov / 2) + (col / WIDTH) * player.fov;
-                
-                let distanceToWall = 0;
-                let hitWall = false;
-                let isBoundary = false;
-
-                let eyeX = Math.cos(rayAngle);
-                let eyeY = Math.sin(rayAngle);
-
-                while (!hitWall && distanceToWall < 16) {
-                    distanceToWall += 0.05;
-                    let testX = Math.floor(player.x + eyeX * distanceToWall);
-                    let testY = Math.floor(player.y + eyeY * distanceToWall);
-
-                    // Проверка вылета за границы карты
-                    if (testX < 0 || testX >= mapWidth || testY < 0 || testY >= mapHeight) {
-                        hitWall = true;
-                        distanceToWall = 16;
-                    } else if (map[testY][testX] === 1) {
-                        hitWall = true;
-                    }
-                }
-
-                // Убираем искажение "рыбьего глаза" (Фикс проекции)
-                let correctedDist = distanceToWall * Math.cos(rayAngle - player.angle);
-                depthBuffer.push(correctedDist);
-
-                // Вычисляем высоту стены на экране на основе расстояния
-                let wallHeight = Math.min(HEIGHT, Math.floor(HEIGHT / correctedDist));
-                let wallTop = (HEIGHT - wallHeight) / 2;
-
-                // Цветовой эффект неоновой стены + затенение глубины
-                let brightness = Math.max(0, 255 - (correctedDist * 16));
-                ctx.strokeStyle = `rgb(0, ${brightness}, ${brightness})`;
-                
-                ctx.beginPath();
-                ctx.moveTo(col, wallTop);
-                ctx.lineTo(col, wallTop + wallHeight);
-                ctx.stroke();
-            }
-
-            // 3. Рендеринг 3D Спрайтов (Врагов/Мишеней)
-            for (let sprite of sprites) {
-                if (!sprite.active) continue;
-
-                // Вектор от игрока к спрайту
-                let spriteX = sprite.x - player.x;
-                let spriteY = sprite.y - player.y;
-
-                let spriteDist = Math.sqrt(spriteX**2 + spriteY**2);
-
-                // Угол объекта относительно взгляда игрока
-                let spriteAngle = Math.atan2(spriteY, spriteX) - player.angle;
-
-                // Нормализация угла
-                while (spriteAngle < -Math.PI) spriteAngle += 2 * Math.PI;
-                while (spriteAngle > Math.PI) spriteAngle -= 2 * Math.PI;
-
-                // Если спрайт в поле зрения
-                if (Math.abs(spriteAngle) < player.fov) {
-                    let spriteScreenSize = Math.min(HEIGHT, Math.floor(HEIGHT / spriteDist));
-                    let spriteXScreen = Math.floor((WIDTH / 2) + (spriteAngle / player.fov) * WIDTH);
-
-                    // Рисуем светящуюся неоновую геометрическую сферу врага
-                    ctx.fillStyle = '#ff00ff';
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = '#ff00ff';
-                    
-                    ctx.beginPath();
-                    // Отрисовываем только если враг не скрыт стеной (проверка буфера глубины)
-                    if (spriteXScreen >= 0 && spriteXScreen < WIDTH && depthBuffer[spriteXScreen] > spriteDist) {
-                        ctx.arc(spriteXScreen, HEIGHT / 2, spriteScreenSize / 4, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.shadowBlur = 0; // Сброс свечения
+            // Раздача на игровое поле
+            for (let i = 0; i < 7; i++) {
+                for (let j = i; j < 7; j++) {
+                    let card = deck.pop();
+                    if (j === i) card.isFaceUp = true;
+                    tableaus[j].push(card);
                 }
             }
+            renderAll();
+        }
 
-            // 4. Отрисовка прицела и оружия игрока
-            ctx.fillStyle = '#00ffff';
-            ctx.fillRect(WIDTH / 2 - 5, HEIGHT / 2 - 1, 10, 2);
-            ctx.fillRect(WIDTH / 2 - 1, HEIGHT / 2 - 5, 2, 10);
-
-            // Эффект вспышки выстрела
-            if (isShooting > 0) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.fillRect(0, 0, WIDTH, HEIGHT);
-                
-                // Рисуем дульное пламя лазера
-                ctx.fillStyle = '#00ffff';
-                ctx.beginPath();
-                ctx.moveTo(WIDTH / 2, HEIGHT);
-                ctx.lineTo(WIDTH / 2 - 40, HEIGHT - 120);
-                ctx.lineTo(WIDTH / 2 + 40, HEIGHT - 120);
-                ctx.fill();
+        function drawCard() {
+            if (deck.length === 0) {
+                if (waste.length === 0) return;
+                deck = waste.reverse().map(c => { c.isFaceUp = false; return c; });
+                waste = [];
             } else {
-                // Статичное футуристичное оружие внизу по центру
-                ctx.fillStyle = '#111122';
-                ctx.strokeStyle = '#00ffff';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.rect(WIDTH / 2 - 20, HEIGHT - 80, 40, 80);
-                ctx.fill();
-                ctx.stroke();
+                let card = deck.pop();
+                card.isFaceUp = true;
+                waste.push(card);
+            }
+            renderAll();
+        }
+
+        function renderAll() {
+            renderZone('deck', deck, true);
+            renderZone('waste', waste);
+            for (let i = 0; i < 4; i++) renderZone(`f-${i}`, foundations[i]);
+            for (let i = 0; i < 7; i++) renderZone(`t-${i}`, tableaus[i], false, true);
+            checkWin();
+        }
+
+        function renderZone(zoneId, cardArray, forceBack = false, isTableau = false) {
+            const zoneEl = document.getElementById(zoneId);
+            zoneEl.innerHTML = '';
+            
+            // Если зона пустая, пишем подсказку масти для дома
+            if (cardArray.length === 0 && zoneId.startsWith('f-')) {
+                zoneEl.innerHTML = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:rgba(255,255,255,0.1); font-size:2rem;">${zoneEl.dataset.suit}</div>`;
+            }
+
+            cardArray.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.classList.add('card');
+                cardEl.classList.add(card.isRed ? 'red' : 'black');
+                
+                if (!card.isFaceUp && !forceBack) cardEl.classList.add('back');
+                if (forceBack) cardEl.classList.add('back');
+
+                cardEl.innerHTML = `
+                    <div><div>${card.value}</div><div style="font-size:0.9rem">${card.suit}</div></div>
+                    <div class="card-suit-bottom"><div>${card.value}</div><div style="font-size:0.9rem">${card.suit}</div></div>
+                `;
+
+                if (isTableau) {
+                    cardEl.style.top = `${index * 25}px`;
+                }
+
+                // Логика Drag & Drop
+                if (card.isFaceUp && !forceBack) {
+                    cardEl.setAttribute('draggable', 'true');
+                    cardEl.addEventListener('dragstart', (e) => {
+                        e.stopPropagation();
+                        sourceZoneId = zoneId;
+                        let cardIndex = index;
+                        
+                        if (isTableau) {
+                            draggedCards = cardArray.slice(cardIndex);
+                        } else {
+                            draggedCards = [card];
+                        }
+                        cardEl.classList.add('dragging');
+                    });
+                    
+                    cardEl.addEventListener('dragend', () => {
+                        cardEl.classList.remove('dragging');
+                        draggedCards = [];
+                    });
+                }
+
+                zoneEl.appendChild(cardEl);
+            });
+        }
+
+        // Настройка зон для приема карт
+        document.querySelectorAll('.zone').forEach(zone => {
+            zone.addEventListener('dragover', e => e.preventDefault());
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDrop(zone.id);
+            });
+        });
+
+        function handleDrop(targetZoneId) {
+            if (draggedCards.length === 0) return;
+
+            let sourceArr = getArrayFromId(sourceZoneId);
+            let targetArr = getArrayFromId(targetZoneId);
+            let topCard = draggedCards[0];
+
+            let isValid = false;
+
+            // Правила для Дома (Foundations)
+            if (targetZoneId.startsWith('f-')) {
+                if (draggedCards.length === 1) {
+                    let fIndex = parseInt(targetZoneId.split('-')[1]);
+                    let targetSuit = document.getElementById(targetZoneId).dataset.suit;
+                    
+                    if (topCard.suit === targetSuit) {
+                        if (targetArr.length === 0 && topCard.value === 'A') isValid = true;
+                        else if (targetArr.length > 0 && topCard.weight === targetArr[targetArr.length - 1].weight + 1) isValid = true;
+                    }
+                }
+            }
+            // Правила для Игрового поля (Tableaus)
+            else if (targetZoneId.startsWith('t-')) {
+                if (targetArr.length === 0) {
+                    if (topCard.value === 'K') isValid = true; // Только Король на пустую ячейку
+                } else {
+                    let lastCard = targetArr[targetArr.length - 1];
+                    if (lastCard.isRed !== topCard.isRed && topCard.weight === lastCard.weight - 1) {
+                        isValid = true; // Чередование цветов и убывание
+                    }
+                }
+            }
+
+            if (isValid) {
+                // Переносим карты в массив новой зоны
+                let numToMove = draggedCards.length;
+                let cardsToAppend = sourceArr.splice(sourceArr.length - numToMove, numToMove);
+                targetArr.push(...cardsToAppend);
+
+                // Открываем верхнюю карту в старой зоне, если нужно
+                if (sourceArr.length > 0 && sourceZoneId.startsWith('t-')) {
+                    sourceArr[sourceArr.length - 1].isFaceUp = true;
+                }
+            }
+
+            renderAll();
+        }
+
+        function getArrayFromId(id) {
+            if (id === 'deck') return deck;
+            if (id === 'waste') return waste;
+            if (id.startsWith('f-')) return foundations[parseInt(id.split('-')[1])];
+            if (id.startsWith('t-')) return tableaus[parseInt(id.split('-')[1])];
+        }
+
+        function checkWin() {
+            let win = foundations.every(f => f.length === 13);
+            if (win) {
+                startVictoryAnimation();
             }
         }
 
-        // Основной игровой цикл
-        function gameLoop() {
-            updateLogic();
-            render();
-            window.requestAnimationFrame(gameLoop);
+        // --- Эффектный Салют Карт при Победе ---
+        function startVictoryAnimation() {
+            const canvas = document.getElementById('victory-canvas');
+            canvas.style.display = 'block';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext('2d');
+            
+            let particles = [];
+            let cardColors = ['#ff3366', '#00ffff'];
+
+            // Генерируем взрыв "карт" из центра
+            for(let i=0; i<100; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.7) * 15 - 5,
+                    width: 50,
+                    height: 70,
+                    color: cardColors[Math.floor(Math.random() * cardColors.length)],
+                    rot: Math.random() * Math.PI,
+                    vRot: (Math.random() - 0.5) * 0.2
+                });
+            }
+
+            function animate() {
+                if(canvas.style.display === 'none') return;
+                ctx.clearRect(0,0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3; // Гравитация
+                    p.rot += p.vRot;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.roundRect(-p.width/2, -p.height/2, p.width, p.height, 5);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
         }
+
+        // Запуск первой игры при открытии
+        resetGame();
     </script>
 </body>
 </html>
