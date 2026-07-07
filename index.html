@@ -3,406 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кто хочет стать миллионером? с полной озвучкой</title>
+    <title>Neon Raycaster 3D Shooter</title>
     <style>
-        :root {
-            --bg-main: #0c0c14;
-            --bg-panel: #161626;
-            --bg-dark: #050508;
-            --accent: #ffd700;
-            --blue: #1f4068;
-            --blue-hover: #285284;
-            --green: #2ecc71;
-            --orange: #e67e22;
-            --red: #e74c3c;
-            --text: #ffffff;
-            --text-muted: #8a8a93;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
-
-        .game-panel { flex: 1; display: flex; flex-direction: column; padding: 25px; justify-content: space-between; }
-        
-        .lifelines-row { display: flex; gap: 15px; justify-content: flex-start; margin-bottom: 10px; }
-        .lifeline-btn { background-color: var(--blue); color: white; border: 1px solid var(--accent); padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 13px; }
-        .lifeline-btn:hover:not(:disabled) { background-color: var(--blue-hover); transform: scale(1.05); }
-        .lifeline-btn:disabled { background-color: #222; border-color: #444; color: #555; cursor: not-allowed; text-decoration: line-through; }
-
-        .audio-control { margin-left: auto; background: #222; border: 1px solid #444; border-radius: 5px; color: #fff; padding: 5px 10px; font-size: 12px; cursor: pointer; }
-
-        .host-monitor { background-color: var(--bg-dark); border-radius: 6px; padding: 12px 15px; font-style: italic; color: #39ff14; font-family: 'Courier New', monospace; min-height: 60px; border-left: 4px solid var(--accent); margin-bottom: 15px; font-size: 14px; display: flex; align-items: center; }
-        
-        .question-box { background-color: var(--bg-panel); padding: 25px; border-radius: 8px; font-size: 18px; font-weight: bold; text-align: center; border: 1px solid #2a2a3a; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 15px; line-height: 1.4; }
-        
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .option-btn { background-color: var(--bg-panel); padding: 18px; border-radius: 6px; font-size: 15px; font-weight: bold; border: 1px solid #2a2a3a; color: var(--text); text-align: left; cursor: pointer; transition: all 0.2s ease; }
-        .option-btn:hover:not(:disabled):not(.selected):not(.correct):not(.wrong) { background-color: #222235; border-color: var(--accent); padding-left: 23px; }
-        .option-btn:disabled { cursor: not-allowed; }
-        .option-btn.selected { background-color: var(--orange); border-color: var(--orange); }
-        .option-btn.correct { background-color: var(--green); border-color: var(--green); animation: blink 0.3s ease 3; }
-        .option-btn.wrong { background-color: var(--red); border-color: var(--red); }
-        .option-btn.removed { visibility: hidden; pointer-events: none; }
-
-        .side-panel { width: 260px; background-color: var(--bg-dark); display: flex; flex-direction: column; padding: 20px 0; border-left: 1px solid #1a1a24; }
-        .side-title { text-align: center; font-size: 14px; font-weight: bold; color: var(--accent); margin-bottom: 20px; letter-spacing: 1px; }
-        .ladder { display: flex; flex-direction: column-reverse; flex: 1; justify-content: center; }
-        .ladder-step { display: flex; padding: 5px 25px; font-size: 14px; font-weight: bold; color: #a0a0ab; }
-        .ladder-step.milestone { color: var(--accent); }
-        .ladder-step.active { background-color: var(--blue); color: #fff !important; border-radius: 4px; }
-
-        .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; z-index: 100; }
-        .modal-content { background: var(--bg-panel); padding: 40px; border-radius: 12px; text-align: center; max-width: 450px; border: 2px solid var(--accent); }
-        .modal h2 { color: var(--accent); margin-bottom: 15px; }
-        .modal p { font-size: 16px; margin-bottom: 25px; line-height: 1.5; }
-        .btn-start { background-color: var(--green); color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-
-        @keyframes blink {
-            0%, 100% { background-color: var(--green); }
-            50% { background-color: #1e1e2a; }
-        }
-
-        @media(max-width: 768px) {
-            body { flex-direction: column-reverse; overflow-y: auto; height: auto; }
-            .side-panel { width: 100%; height: auto; padding: 10px 0; }
-            .ladder { flex-direction: row; flex-wrap: wrap; gap: 5px; padding: 10px; justify-content: center; }
-            .ladder-step { padding: 4px 8px; font-size: 11px; }
-            .options-grid { grid-template-columns: 1fr; }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #050508; font-family: 'Courier New', monospace; }
+        #canvas { display: block; margin: 0 auto; background-color: #000; box-shadow: 0 0 30px rgba(0, 255, 255, 0.2); }
+        .ui-overlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); text-align: center; color: #00ffff; pointer-events: none; text-shadow: 0 0 8px #00ffff; }
+        .instructions { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: #ff00ff; text-align: center; pointer-events: none; text-shadow: 0 0 5px #ff00ff; font-size: 14px; }
+        .start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; color: #00ffff; }
+        .start-btn { background: transparent; border: 2px solid #00ffff; color: #00ffff; padding: 15px 40px; font-size: 20px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 5px; box-shadow: 0 0 15px rgba(0,255,255,0.4); transition: all 0.2s; margin-top: 20px; }
+        .start-btn:hover { background: #00ffff; color: #000; box-shadow: 0 0 25px #00ffff; }
     </style>
 </head>
 <body>
 
-    <div class="game-panel">
-        <div class="lifelines-row">
-            <button class="lifeline-btn" id="life-50" onclick="use5050()">50 : 50</button>
-            <button class="lifeline-btn" id="life-hall" onclick="useHall()">Помощь зала</button>
-            <button class="lifeline-btn" id="life-call" onclick="useCall()">Звонок другу</button>
-            <button class="audio-control" id="mute-btn" onclick="toggleMute()">🔊 Звук: Вкл</button>
-        </div>
-
-        <div class="host-monitor" id="host-text">Ведущий: Добро пожаловать на шоу! Готовы побороться за один миллион рублей? Нажмите «Начать игру»!</div>
-
-        <div class="question-box" id="question">Нажмите кнопку старта ниже, чтобы включить студию и запустить озвучку.</div>
-        
-        <div class="options-grid">
-            <button class="option-btn" id="opt-0" onclick="selectOption(0)" disabled>A: </button>
-            <button class="option-btn" id="opt-1" onclick="selectOption(1)" disabled>B: </button>
-            <button class="option-btn" id="opt-2" onclick="selectOption(2)" disabled>C: </button>
-            <button class="option-btn" id="opt-3" onclick="selectOption(3)" disabled>D: </button>
-        </div>
+    <div class="start-screen" id="start-screen">
+        <h1>NEON RAYCASTER 3D</h1>
+        <p style="color: #ff00ff; margin-top: 10px;">Процедурный псевдо-3D шутер в одном файле</p>
+        <button class="start-btn" onclick="initGame()">ВСТУПИТЬ В БОЙ</button>
     </div>
 
-    <div class="side-panel">
-        <div class="side-title">ТЕКУЩИЙ СЧЕТ</div>
-        <div class="ladder" id="ladder"></div>
+    <div class="ui-overlay">
+        <h2 id="hud">ЗАРЯДЫ: 8/8  |  ОБЪЕКТЫ СТЕРТЫ: 0</h2>
     </div>
 
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <h2 id="modal-title">Интеллектуальное Шоу</h2>
-            <p id="modal-text">Добро пожаловать в кресло игрока. Вопросы и реплики ведущего будут полностью озвучены.</p>
-            <button class="btn-start" id="start-btn" onclick="startGame()">Начать игру</button>
-        </div>
+    <div class="instructions">
+        УПРАВЛЕНИЕ: WASD — Движение | Мышь — Обзор | Клик — Выстрел
     </div>
+
+    <canvas id="canvas"></canvas>
 
     <script>
-        // --- ЗВУКОВОЙ ДВИЖОК (Web Audio API + Речевой синтез) ---
+        // --- Аудио Движок (Синтез эффектов Doom) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let bgOsc = null;
-        let bgGain = null;
-        let isMuted = false;
-
-        // Функция для чтения текста голосом
-        function speak(text) {
-            if (isMuted) return;
-            
-            // Останавливаем текущее говорение, если оно идет
-            window.speechSynthesis.cancel();
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ru-RU';
-            utterance.rate = 1.0; // Скорость речи
-            utterance.pitch = 0.9; // Чуть ниже тон для авторитетности ведущего
-
-            // Приглушаем музыку, пока говорит ведущий
-            if (bgGain) bgGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-
-            utterance.onend = () => {
-                // Возвращаем громкость музыки, когда ведущий закончил говорить
-                if (bgGain && !isMuted && !isAnswering) {
-                    bgGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                }
-            };
-
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function playSound(type) {
-            if (isMuted) return;
+        
+        function playLaserSound() {
             const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
             
-            if (type === 'think_bg') {
-                if (bgOsc) return;
-                bgOsc = audioCtx.createOscillator();
-                bgGain = audioCtx.createGain();
-                bgOsc.type = 'sawtooth';
-                bgOsc.frequency.setValueAtTime(55, now);
-                
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(140, now);
+            osc.type = 'sawtooth';
+            // Скользящая частота вниз (классический лазерный выстрел)
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(110, now + 0.15);
+            
+            // Фильтр для жесткости
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(400, now);
 
-                bgGain.gain.setValueAtTime(0.15, now);
-                
-                bgOsc.connect(filter);
-                filter.connect(bgGain);
-                bgGain.connect(audioCtx.destination);
-                bgOsc.start();
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.15);
+            
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(now + 0.15);
+        }
+
+        function playExplosionSound() {
+            const now = audioCtx.currentTime;
+            // Создаем белый шум для взрыва
+            const bufferSize = audioCtx.sampleRate * 0.3;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
             }
             
-            if (type === 'select') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(220, now);
-                osc.frequency.exponentialRampToValueAtTime(110, now + 0.5);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.linearRampToValueAtTime(0, now + 0.5);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(now + 0.5);
-            }
-
-            if (type === 'correct') {
-                const notes = [261.63, 329.63, 392.00, 523.25];
-                notes.forEach((freq, index) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(freq, now + index * 0.1);
-                    gain.gain.setValueAtTime(0.2, now + index * 0.1);
-                    gain.gain.linearRampToValueAtTime(0, now + index * 0.1 + 0.4);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start(now + index * 0.1);
-                    osc.stop(now + index * 0.1 + 0.4);
-                });
-            }
-
-            if (type === 'wrong') {
-                const osc1 = audioCtx.createOscillator();
-                const osc2 = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc1.type = 'sawtooth';
-                osc2.type = 'sawtooth';
-                osc1.frequency.setValueAtTime(120, now);
-                osc2.frequency.setValueAtTime(117, now);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.linearRampToValueAtTime(0, now + 1.5);
-                osc1.connect(gain);
-                osc2.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc1.start();
-                osc2.start();
-                osc1.stop(now + 1.5);
-                osc2.stop(now + 1.5);
-            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(300, now);
+            filter.frequency.exponentialRampToValueAtTime(10, now + 0.3);
+            
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.3);
+            
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            noise.start();
         }
 
-        function stopBgSound() {
-            if (bgOsc) {
-                try { bgOsc.stop(); } catch(e){}
-                bgOsc = null;
-            }
-        }
+        // --- Игровой Движок ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            document.getElementById('mute-btn').innerText = isMuted ? "🔇 Звук: Выкл" : "🔊 Звук: Вкл";
-            if (isMuted) {
-                stopBgSound();
-                window.speechSynthesis.cancel();
-            } else {
-                if (currentStep < 15 && document.getElementById('modal').style.display !== 'flex') {
-                    playSound('think_bg');
-                }
-            }
-        }
+        // Разрешение рендеринга (фиксированное для ретро-атмосферы)
+        const WIDTH = 640;
+        const HEIGHT = 400;
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
 
-        // --- ИГРОВАЯ ЛОГИКА ---
-        const QUESTIONS = [
-            {q: "Какая планета третья от Солнца?", a: ["Марс", "Венера", "Земля", "Меркурий"], correct: 2},
-            {q: "Сколько букв в русском алфавите?", a: ["32", "33", "34", "30"], correct: 1},
-            {q: "Что из этого НЕ является музыкальным инструментом?", a: ["Скрипка", "Флейта", "Тостер", "Барабан"], correct: 2},
-            {q: "Какое животное считается самым быстрым на суше?", a: ["Лев", "Гепард", "Заяц", "Страус"], correct: 1},
-            {q: "В каком городе находится Эйфелева башня?", a: ["Лондон", "Рим", "Берлин", "Париж"], correct: 3},
-            {q: "Какой химический элемент обозначается символом 'O'?", a: ["Золото", "Кислород", "Водород", "Железо"], correct: 1},
-            {q: "Кто написал роман 'Преступление и наказание'?", a: ["Толстой", "Чехов", "Достоевский", "Пушкин"], correct: 2},
-            {q: "Какая денежная единица используется в Японии?", a: ["Йена", "Юань", "Вона", "Доллар"], correct: 0},
-            {q: "Какое море является самым соленым на Земле?", a: ["Красное", "Средиземное", "Мёртвое", "Черное"], correct: 2},
-            {q: "В каком году произошел первый полет человека в космос?", a: ["1957", "1961", "1965", "1969"], correct: 1},
-            {q: "Какая самая длинная река в мире?", a: ["Амазонка", "Нил", "Янцзы", "Миссисипи"], correct: 0},
-            {q: "Какое государство является самым маленьким по площади?", a: ["Монако", "Мальта", "Ватикан", "Сан-Марино"], correct: 2},
-            {q: "Кто открыл закон всемирного тяготения?", a: ["Ньютон", "Эйнштейн", "Галилей", "Коперник"], correct: 0},
-            {q: "Сколько хромосом в здоровой соматической клетке человека?", a: ["23", "44", "46", "48"], correct: 2},
-            {q: "Какое культовое здание спроектировал архитектор Йорн Утзон?", a: ["Эмпайр-стейт-билдинг", "Сиднейский оперный театр", "Бурдж-Халифа", "Лувр"], correct: 1}
+        // Карта лабиринта (1 — неоновая стена, 0 — пусто)
+        const map = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,0,0,1,0,1,1,1,1,0,1,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,1,0,1,0,1],
+            [1,0,1,0,1,1,1,1,1,0,0,1,0,1,0,1],
+            [1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1],
+            [1,0,1,0,1,0,0,0,1,0,1,1,1,1,0,1],
+            [1,0,1,0,1,1,0,1,1,0,0,0,0,0,0,1],
+            [1,0,1,0,0,0,0,0,0,0,1,1,0,1,0,1],
+            [1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1]
+        ];
+        const mapWidth = map[0].length;
+        const mapHeight = map.length;
+
+        // Игрок
+        const player = {
+            x: 2.5,
+            y: 2.5,
+            angle: 0,
+            fov: Math.PI / 3, // 60 градусов обзор
+            speed: 0.06,
+            rotSpeed: 0.003
+        };
+
+        // Враги / Мишени (Спрайты)
+        let sprites = [
+            {x: 4.5, y: 3.5, active: true},
+            {x: 12.5, y: 2.5, active: true},
+            {x: 12.5, y: 7.5, active: true},
+            {x: 7.5, y: 6.5, active: true}
         ];
 
-        const MONEY_LADDER = ["0", "100", "200", "300", "500", "1 000", "2 000", "4 000", "8 000", "16 000", "32 000", "64 000", "125 000", "250 000", "500 000", "1 000 000"];
-        const MILESTONES = [5, 10, 15];
+        // Состояние ввода
+        const keys = {};
+        let score = 0;
+        let ammo = 8;
+        let isShooting = 0; // Фазы анимации выстрела
 
-        let currentStep = 0;
-        let isAnswering = false;
-
-        function initLadder() {
-            const container = document.getElementById('ladder');
-            container.innerHTML = '';
-            for (let i = 1; i <= 15; i++) {
-                const step = document.createElement('div');
-                step.className = `ladder-step ${MILESTONES.includes(i) ? 'milestone' : ''}`;
-                step.id = `step-${i}`;
-                step.innerHTML = `<span>${i} ♦ ${MONEY_LADDER[i]} руб</span>`;
-                container.appendChild(step);
-            }
-        }
-
-        function startGame() {
+        // Настройка захвата мыши
+        function initGame() {
             audioCtx.resume();
-            document.getElementById('modal').style.display = 'none';
-            playSound('think_bg');
-            loadQuestion();
+            document.getElementById('start-screen').style.display = 'none';
+            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
+            canvas.requestPointerLock();
+            window.requestAnimationFrame(gameLoop);
         }
 
-        function loadQuestion() {
-            isAnswering = false;
-            const q = QUESTIONS[currentStep];
-            document.getElementById('question').innerText = q.q;
-            
-            const letters = ["A", "B", "C", "D"];
-            for (let i = 0; i < 4; i++) {
-                const btn = document.getElementById(`opt-${i}`);
-                btn.innerText = `${letters[i]}: ${q.a[i]}`;
-                btn.className = 'option-btn';
-                btn.disabled = false;
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('mousemove', e => {
+            if (document.pointerLockElement === canvas) {
+                player.angle += e.movementX * player.rotSpeed;
             }
-
-            for (let i = 1; i <= 15; i++) {
-                const el = document.getElementById(`step-${i}`);
-                el.classList.remove('active');
-                if (i === currentStep + 1) el.classList.add('active');
+        });
+        window.addEventListener('mousedown', () => {
+            if (document.pointerLockElement === canvas && isShooting === 0 && ammo > 0) {
+                isShooting = 5; // Длительность вспышки выстрела в кадрах
+                ammo--;
+                playLaserSound();
+                checkHit();
+                updateHUD();
+            } else if (ammo === 0 && isShooting === 0) {
+                // Автоперезарядка
+                ammo = 8;
+                updateHUD();
             }
+        });
 
-            const hostAnnouncement = `Вопрос номер ${currentStep + 1} на ${MONEY_LADDER[currentStep + 1]} рублей. ${q.q}. Варианты ответов. А: ${q.a[0]}. Бэ: ${q.a[1]}. Цэ: ${q.a[2]}. Дэ: ${q.a[3]}.`;
-            setHostText(`Вопрос на ${MONEY_LADDER[currentStep + 1]} рублей. Время пошло...`);
-            speak(hostAnnouncement);
+        function updateHUD() {
+            document.getElementById('hud').innerText = `ЗАРЯДЫ: ${ammo}/8  |  ОБЪЕКТЫ СТЕРТЫ: ${score}`;
         }
 
-        function setHostText(text) {
-            document.getElementById('host-text').innerText = `Ведущий: ${text}`;
-        }
+        // Проверка попадания при выстреле (строго по центру экрана)
+        function checkHit() {
+            // Пускаем луч строго по центру взгляда игрока
+            let rayAngle = player.angle;
+            let distanceToWall = 0;
+            let hitWall = false;
 
-        function selectOption(idx) {
-            if (isAnswering) return;
-            isAnswering = true;
+            let x = player.x;
+            let y = player.y;
 
-            playSound('select');
-            window.speechSynthesis.cancel(); // Обрываем чтение вопроса, если игрок ответил раньше
+            let dx = Math.cos(rayAngle) * 0.1;
+            let dy = Math.sin(rayAngle) * 0.1;
 
-            if (bgGain) bgGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            // Ищем, задел ли луч активный спрайт до того, как ударился в стену
+            while (!hitWall && distanceToWall < 16) {
+                x += dx;
+                y += dy;
+                distanceToWall += 0.1;
 
-            for (let i = 0; i < 4; i++) document.getElementById(`opt-${i}`).disabled = true;
-
-            const selectedBtn = document.getElementById(`opt-${idx}`);
-            selectedBtn.classList.add('selected');
-            
-            const selectedLetter = ["A", "B", "C", "D"][idx];
-            setHostText(`Принят ответ ${selectedLetter}. Минутку...`);
-            speak(`Вы выбрали вариант ${selectedLetter}. Посмотрим, верный ли это выбор...`);
-
-            setTimeout(() => {
-                const q = QUESTIONS[currentStep];
-                if (idx === q.correct) {
-                    stopBgSound();
-                    playSound('correct');
-                    selectedBtn.className = 'option-btn correct';
-                    
-                    const winText = `И это правильный ответ! Вы зарабатываете ${MONEY_LADDER[currentStep + 1]} рублей!`;
-                    setHostText(winText);
-                    speak(winText);
-                    
-                    setTimeout(() => {
-                        currentStep++;
-                        if (currentStep === 15) {
-                            showModal("ТРИУМФ!", `Невероятно! Вы ответили на все 15 вопросов и выиграли ${MONEY_LADDER[15]} рублей!`);
-                        } else {
-                            playSound('think_bg');
-                            loadQuestion();
-                        }
-                    }, 4000);
-                } else {
-                    stopBgSound();
-                    playSound('wrong');
-                    selectedBtn.className = 'option-btn wrong';
-                    document.getElementById(`opt-${q.correct}`).className = 'option-btn correct';
-                    
-                    let guaranteed = "0";
-                    if (currentStep >= 10) guaranteed = MONEY_LADDER[10];
-                    else if (currentStep >= 5) guaranteed = MONEY_LADDER[5];
-
-                    const loseText = `К сожалению, это ошибка. Правильный ответ — ${["A","B","C","D"][q.correct]}.`;
-                    setHostText(loseText);
-                    speak(loseText + ` Ваш несгораемый выигрыш составляет ${guaranteed} рублей. Игра окончена.`);
-                    
-                    setTimeout(() => {
-                        showModal("Игра окончена", `Вы срезались на вопросе №${currentStep + 1}.\n\nВаш чистый выигрыш: ${guaranteed} рублей.`);
-                    }, 5000);
+                if (map[Math.floor(y)][Math.floor(x)] === 1) {
+                    hitWall = true;
                 }
-            }, 3500); // Чуть увеличил задержку ответа, чтобы дать ведущему договорить фразу
+
+                // Проверяем дистанцию до врагов
+                for (let sprite of sprites) {
+                    if (sprite.active) {
+                        let distToSprite = Math.sqrt((x - sprite.x)**2 + (y - sprite.y)**2);
+                        if (distToSprite < 0.2) {
+                            sprite.active = false;
+                            score++;
+                            playExplosionSound();
+                            return;
+                        }
+                    }
+                }
+            }
         }
 
-        function use5050() {
-            document.getElementById('life-50').disabled = true;
-            playSound('select');
-            const q = QUESTIONS[currentStep];
-            let wrong = [0,1,2,3].filter(i => i !== q.correct);
-            wrong.sort(() => Math.random() - 0.5);
-            document.getElementById(`opt-${wrong[0]}`).classList.add('removed');
-            document.getElementById(`opt-${wrong[1]}`).classList.add('removed');
-            speak("Убираем два неверных варианта.");
+        // Обновление физики перемещения
+        function updateLogic() {
+            let moveX = 0;
+            let moveY = 0;
+
+            if (keys['KeyW']) {
+                moveX += Math.cos(player.angle) * player.speed;
+                moveY += Math.sin(player.angle) * player.speed;
+            }
+            if (keys['KeyS']) {
+                moveX -= Math.cos(player.angle) * player.speed;
+                moveY -= Math.sin(player.angle) * player.speed;
+            }
+            if (keys['KeyA']) { // Стрейф влево
+                moveX += Math.sin(player.angle) * player.speed;
+                moveY -= Math.cos(player.angle) * player.speed;
+            }
+            if (keys['KeyD']) { // Стрейф вправо
+                moveX -= Math.sin(player.angle) * player.speed;
+                moveY += Math.cos(player.angle) * player.speed;
+            }
+
+            // Коллизии со стенами (с запасом, чтобы не залипать)
+            let newX = player.x + moveX;
+            let newY = player.y + moveY;
+
+            if (map[Math.floor(player.y)][Math.floor(newX + Math.sign(moveX)*0.2)] === 0) player.x = newX;
+            if (map[Math.floor(newY + Math.sign(moveY)*0.2)][Math.floor(player.x)] === 0) player.y = newY;
+
+            if (isShooting > 0) isShooting--;
         }
 
-        function useHall() {
-            document.getElementById('life-hall').disabled = true;
-            playSound('select');
-            const q = QUESTIONS[currentStep];
-            const letter = ["A","B","C","D"][q.correct];
-            const text = `Большинство зрителей в зале выбирают вариант ${letter}.`;
-            setHostText(text);
-            speak(text);
+        // --- РЕНДЕРИНГ (Алгоритм Рейкастинга) ---
+        function render() {
+            // 1. Рисуем небо и пол (простой градиент)
+            ctx.fillStyle = '#0a0512';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT / 2);
+            ctx.fillStyle = '#050a12';
+            ctx.fillRect(0, HEIGHT / 2, WIDTH, HEIGHT / 2);
+
+            // Массив глубин для корректного рендеринга спрайтов поверх стен
+            let depthBuffer = [];
+
+            // 2. Сканируем экран по вертикальным полосам (Рейкастинг стенок)
+            for (let col = 0; col < WIDTH; col++) {
+                // Вычисляем угол конкретного луча внутри угла обзора (FOV)
+                let rayAngle = (player.angle - player.fov / 2) + (col / WIDTH) * player.fov;
+                
+                let distanceToWall = 0;
+                let hitWall = false;
+                let isBoundary = false;
+
+                let eyeX = Math.cos(rayAngle);
+                let eyeY = Math.sin(rayAngle);
+
+                while (!hitWall && distanceToWall < 16) {
+                    distanceToWall += 0.05;
+                    let testX = Math.floor(player.x + eyeX * distanceToWall);
+                    let testY = Math.floor(player.y + eyeY * distanceToWall);
+
+                    // Проверка вылета за границы карты
+                    if (testX < 0 || testX >= mapWidth || testY < 0 || testY >= mapHeight) {
+                        hitWall = true;
+                        distanceToWall = 16;
+                    } else if (map[testY][testX] === 1) {
+                        hitWall = true;
+                    }
+                }
+
+                // Убираем искажение "рыбьего глаза" (Фикс проекции)
+                let correctedDist = distanceToWall * Math.cos(rayAngle - player.angle);
+                depthBuffer.push(correctedDist);
+
+                // Вычисляем высоту стены на экране на основе расстояния
+                let wallHeight = Math.min(HEIGHT, Math.floor(HEIGHT / correctedDist));
+                let wallTop = (HEIGHT - wallHeight) / 2;
+
+                // Цветовой эффект неоновой стены + затенение глубины
+                let brightness = Math.max(0, 255 - (correctedDist * 16));
+                ctx.strokeStyle = `rgb(0, ${brightness}, ${brightness})`;
+                
+                ctx.beginPath();
+                ctx.moveTo(col, wallTop);
+                ctx.lineTo(col, wallTop + wallHeight);
+                ctx.stroke();
+            }
+
+            // 3. Рендеринг 3D Спрайтов (Врагов/Мишеней)
+            for (let sprite of sprites) {
+                if (!sprite.active) continue;
+
+                // Вектор от игрока к спрайту
+                let spriteX = sprite.x - player.x;
+                let spriteY = sprite.y - player.y;
+
+                let spriteDist = Math.sqrt(spriteX**2 + spriteY**2);
+
+                // Угол объекта относительно взгляда игрока
+                let spriteAngle = Math.atan2(spriteY, spriteX) - player.angle;
+
+                // Нормализация угла
+                while (spriteAngle < -Math.PI) spriteAngle += 2 * Math.PI;
+                while (spriteAngle > Math.PI) spriteAngle -= 2 * Math.PI;
+
+                // Если спрайт в поле зрения
+                if (Math.abs(spriteAngle) < player.fov) {
+                    let spriteScreenSize = Math.min(HEIGHT, Math.floor(HEIGHT / spriteDist));
+                    let spriteXScreen = Math.floor((WIDTH / 2) + (spriteAngle / player.fov) * WIDTH);
+
+                    // Рисуем светящуюся неоновую геометрическую сферу врага
+                    ctx.fillStyle = '#ff00ff';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#ff00ff';
+                    
+                    ctx.beginPath();
+                    // Отрисовываем только если враг не скрыт стеной (проверка буфера глубины)
+                    if (spriteXScreen >= 0 && spriteXScreen < WIDTH && depthBuffer[spriteXScreen] > spriteDist) {
+                        ctx.arc(spriteXScreen, HEIGHT / 2, spriteScreenSize / 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.shadowBlur = 0; // Сброс свечения
+                }
+            }
+
+            // 4. Отрисовка прицела и оружия игрока
+            ctx.fillStyle = '#00ffff';
+            ctx.fillRect(WIDTH / 2 - 5, HEIGHT / 2 - 1, 10, 2);
+            ctx.fillRect(WIDTH / 2 - 1, HEIGHT / 2 - 5, 2, 10);
+
+            // Эффект вспышки выстрела
+            if (isShooting > 0) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fillRect(0, 0, WIDTH, HEIGHT);
+                
+                // Рисуем дульное пламя лазера
+                ctx.fillStyle = '#00ffff';
+                ctx.beginPath();
+                ctx.moveTo(WIDTH / 2, HEIGHT);
+                ctx.lineTo(WIDTH / 2 - 40, HEIGHT - 120);
+                ctx.lineTo(WIDTH / 2 + 40, HEIGHT - 120);
+                ctx.fill();
+            } else {
+                // Статичное футуристичное оружие внизу по центру
+                ctx.fillStyle = '#111122';
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.rect(WIDTH / 2 - 20, HEIGHT - 80, 40, 80);
+                ctx.fill();
+                ctx.stroke();
+            }
         }
 
-        function useCall() {
-            document.getElementById('life-call').disabled = true;
-            playSound('select');
-            const q = QUESTIONS[currentStep];
-            const letter = ["A","B","C","D"][q.correct];
-            const text = `Друг на проводе считает, что правильный ответ — это ${letter}.`;
-            setHostText(text);
-            speak(text);
+        // Основной игровой цикл
+        function gameLoop() {
+            updateLogic();
+            render();
+            window.requestAnimationFrame(gameLoop);
         }
-
-        function showModal(title, text) {
-            stopBgSound();
-            window.speechSynthesis.cancel();
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-text').innerText = text;
-            document.getElementById('start-btn').innerText = "Играть снова";
-            document.getElementById('modal').style.display = 'flex';
-        }
-
-        initLadder();
     </script>
 </body>
 </html>
